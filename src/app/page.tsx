@@ -26,7 +26,15 @@ const SUBSCRIBED_KEY = "date-reply-subscribed";
 
 // Payment flow tracking
 const trackPayment = (event: string, metadata?: Record<string, string>) => {
-  const payload = { event, feature: "payment_flow", ...metadata, ts: Date.now() };
+  const payload = {
+    event,
+    feature: "payment_flow",
+    utm_source: localStorage.getItem("utm_source") || undefined,
+    utm_medium: localStorage.getItem("utm_medium") || undefined,
+    utm_campaign: localStorage.getItem("utm_campaign") || undefined,
+    ...metadata,
+    ts: Date.now(),
+  };
   console.log("[PAYMENT_TRACK]", payload);
   localStorage.setItem("payment_event", JSON.stringify(payload));
 };
@@ -43,8 +51,8 @@ function SubscriptionModal({ onClose, onSubscribe, subscribing }: SubscriptionMo
       <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
         <div className="bg-gradient-to-br from-pink-400 to-rose-500 p-6 text-white text-center">
           <div className="text-4xl mb-2">💬</div>
-          <h2 className="text-xl font-bold">你已经用完了{FREE_USES_LIMIT}次</h2>
-          <p className="text-pink-100 text-sm mt-1">你已用完 {FREE_USES_LIMIT} 次免费机会</p>
+          <h2 className="text-xl font-bold">试用次数已用完</h2>
+          <p className="text-pink-100 text-sm mt-1">解锁 Pro，无限次使用</p>
         </div>
 
         <div className="p-6 space-y-4">
@@ -119,8 +127,18 @@ export default function Home() {
     const stored = parseInt(localStorage.getItem(USES_KEY) ?? "0", 10);
     setUsesCount(isNaN(stored) ? 0 : stored);
 
-    // Handle return from Stripe checkout
+    // Capture UTM params on first visit
     const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get("utm_source");
+    const utmMedium = params.get("utm_medium");
+    const utmCampaign = params.get("utm_campaign");
+    if (utmSource && !localStorage.getItem("utm_source")) {
+      localStorage.setItem("utm_source", utmSource);
+      localStorage.setItem("utm_medium", utmMedium || "");
+      localStorage.setItem("utm_campaign", utmCampaign || "");
+    }
+
+    // Handle return from Stripe checkout
     if (params.get("subscribed") === "true") {
       localStorage.setItem(SUBSCRIBED_KEY, "true");
       setIsSubscribed(true);
@@ -172,8 +190,8 @@ export default function Home() {
     }
   };
 
-  const PAYMENT_LINK_MONTHLY = "https://buy.stripe.com/test_fZufZhfiUgcmeRMayWcjS0e";
-  const PAYMENT_LINK_YEARLY = "https://buy.stripe.com/test_00w8wP7Qs6BM250dL8cjS0f";
+  const PAYMENT_LINK_MONTHLY = "https://buy.stripe.com/test_4gM00j4Eg5xIbFAayWcjS0a";
+  const PAYMENT_LINK_YEARLY = "https://buy.stripe.com/test_eVqfZhfiUaS29xs4aycjS09";
 
   const track = (event: string, metadata?: Record<string, string>) => {
     const payload = { event, feature: "payment_flow", ...metadata, ts: Date.now() };
@@ -236,7 +254,7 @@ export default function Home() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold text-gray-900">💬 约会短信助手</h1>
-          <p className="text-sm text-gray-500 mt-1">不知道怎么回？给你3个选择</p>
+          <p className="text-sm text-gray-500 mt-1">收到暧昧消息不知道怎么回？AI 帮你生成3个回复选项</p>
         </div>
       </header>
 
@@ -246,34 +264,19 @@ export default function Home() {
           <div className="mb-6 p-3 bg-pink-50 border border-pink-100 rounded-xl flex items-center justify-between">
             <span className="text-sm text-pink-700">
               {remainingFree > 0
-                ? `还有 ${remainingFree} 次免费机会`
-                : "免费次数已用完"}
+                ? `免费试用 ${remainingFree} 次，不绑卡`
+                : "试用次数已用完"}
             </span>
+          </div>
+
+          {!isSubscribed && (
             <button
               onClick={() => setShowPaywall(true)}
-              className="text-xs text-pink-500 font-medium hover:text-pink-700"
+              className="w-full py-3 bg-pink-500 text-white rounded-xl font-medium text-base hover:bg-pink-600 transition-colors mb-6"
             >
-              解锁无限次 →
+              解锁 Pro，无限用 →
             </button>
-          </div>
-        )}
-
-        {/* Demo Mode Toggle - only show in development */}
-        {process.env.NODE_ENV !== "production" && (
-          <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isDemoMode}
-                onChange={(e) => setIsDemoMode(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300"
-              />
-              <div>
-                <span className="text-sm font-medium text-yellow-800">测试模式</span>
-                <p className="text-xs text-yellow-600">使用示例回复</p>
-              </div>
-            </label>
-          </div>
+          )}
         )}
 
         {/* Their Message Input */}

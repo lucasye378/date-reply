@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
     case "invoice.payment_failed": {
       const invoice = event.data.object as Stripe.Invoice;
-      console.log("❌ Renewal payment failed:", invoice.customer, "reason:", invoice.last_payment_error?.message);
+      console.log("❌ Renewal payment failed:", invoice.customer);
       // TODO: Notify user, suspend access
       break;
     }

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 function getStripe() {
-  return new Stripe(process.env.STRIPE_SECRET_KEY!);
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    timeout: 30000,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -16,7 +18,6 @@ export async function POST(req: NextRequest) {
   const stripe = getStripe();
   let event: Stripe.Event;
   try {
-    console.log("Webhook received - body length:", body.length, "sig:", sig ? sig.substring(0, 50) + "..." : "none", "secret len:", (process.env.STRIPE_WEBHOOK_SECRET || "").length);
     event = stripe.webhooks.constructEvent(
       body,
       sig,
@@ -28,9 +29,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature", details: message }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    console.log("Subscription started:", session.customer);
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log("✅ Subscription started:", session.customer, "email:", session.customer_email);
+      // TODO: Grant access to user (update database, send welcome email, etc.)
+      break;
+    }
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice;
+      console.log("💰 Renewal payment succeeded:", invoice.customer, "amount:", invoice.amount_paid);
+      // TODO: Extend subscription period
+      break;
+    }
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice;
+      console.log("❌ Renewal payment failed:", invoice.customer, "reason:", invoice.last_payment_error?.message);
+      // TODO: Notify user, suspend access
+      break;
+    }
+    case "customer.subscription.deleted": {
+      const subscription = event.data.object as Stripe.Subscription;
+      console.log("🗑️ Subscription cancelled:", subscription.customer);
+      // TODO: Revoke access
+      break;
+    }
+    default:
+      console.log("Unhandled event type:", event.type);
   }
 
   return NextResponse.json({ received: true });

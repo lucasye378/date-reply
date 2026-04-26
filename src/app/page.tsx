@@ -43,7 +43,7 @@ function SubscriptionModal({ onClose, onSubscribe, subscribing }: SubscriptionMo
       <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
         <div className="bg-gradient-to-br from-pink-400 to-rose-500 p-6 text-white text-center">
           <div className="text-4xl mb-2">💬</div>
-          <h2 className="text-xl font-bold">你已经用完了5次</h2>
+          <h2 className="text-xl font-bold">你已经用完了{FREE_USES_LIMIT}次</h2>
           <p className="text-pink-100 text-sm mt-1">你已用完 {FREE_USES_LIMIT} 次免费机会</p>
         </div>
 
@@ -258,21 +258,23 @@ export default function Home() {
           </div>
         )}
 
-        {/* Demo Mode Toggle */}
-        <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isDemoMode}
-              onChange={(e) => setIsDemoMode(e.target.checked)}
-              className="w-5 h-5 rounded border-gray-300"
-            />
-            <div>
-              <span className="text-sm font-medium text-yellow-800">测试模式（无需 API key）</span>
-              <p className="text-xs text-yellow-600">勾选后使用示例回复，方便测试 UI</p>
-            </div>
-          </label>
-        </div>
+        {/* Demo Mode Toggle - only show in development */}
+        {process.env.NODE_ENV !== "production" && (
+          <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isDemoMode}
+                onChange={(e) => setIsDemoMode(e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300"
+              />
+              <div>
+                <span className="text-sm font-medium text-yellow-800">测试模式</span>
+                <p className="text-xs text-yellow-600">使用示例回复</p>
+              </div>
+            </label>
+          </div>
+        )}
 
         {/* Their Message Input */}
         <div className="mb-6">

@@ -141,8 +141,11 @@ export default function BlogPage() {
         {/* CTA */}
         <section className="bg-gradient-to-r from-pink-400 to-rose-500 rounded-2xl p-8 text-white text-center">
           <h2 className="text-2xl font-bold mb-2">不知道怎么说？给你3个选项</h2>
+          <p className="text-pink-100 mb-4">
+            "每次发消息都要想很久，怕说错话"——这是我们用户的真实感受
+          </p>
           <p className="text-pink-100 mb-6">
-            date-reply 会根据对方的消息和你们的关系阶段，给出3个不同风格的回复建议
+            date-reply 根据对方的消息和你们的关系阶段，给出3个不同风格的回复建议
           </p>
           <Link
             href="/"
